@@ -1,6 +1,8 @@
 import praw
 import pandas as pd
 from typing import List
+from datetime import datetime
+import pytz
 
 class RedditSubmissions:
     def __init__(self, reddit_instance):
@@ -72,3 +74,31 @@ class RedditSubmissions:
         except Exception as e:
             print(f"An error occurred: {e}")
             return []
+
+
+class RedditAPIHelper:
+    def __init__(self, reddit_instance):
+        self.reddit = reddit_instance
+
+    def get_api_limit(self, timezone: str):
+        """
+        Purpose:
+            identify how many API calls left in the limit imposed by reddit (600 per 10 minutes) 
+
+        Arguments:
+            timezone: timezone as a string e.g. ('Europe/Zurich')
+
+        Output:
+            a print statement informing when the reset time was for API calls and how many remaining requests there are
+        """
+        try:
+            #connect to reddit authority limits
+            limit = self.reddit.auth.limits
+            remaining_requests = limit['remaining']
+            #get datetime of when reset will occur & translate into local time
+            reset = datetime.utcfromtimestamp(limit['reset_timestamp'])
+            reset_time = pytz.utc.localize(reset).astimezone(pytz.timezone(timezone))
+            print(f'Reset time was {reset_time}, you have {remaining_requests} requests remaining')
+            
+        except pytz.UnknownTimeZoneError:
+            print(f'Unknown timezone: {timezone}')

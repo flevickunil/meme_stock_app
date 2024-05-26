@@ -4,5 +4,3 @@ credentials.env
 #Project Files
 streamlit_test.py
 
-#large files
-glove.6B.50d.txt

@@ -9,6 +9,7 @@ from nltk.tokenize import word_tokenize
 import json
 from typing import List, Tuple
 import pandas as pd
+import ast
 
 class ModelUtils:
     """
@@ -38,7 +39,7 @@ class ModelUtils:
         return np.dot(vec1, vec2) / (norm1 * norm2)
 
     @staticmethod
-    def evaluate_model_performance(true_tickers, extracted_tickers):
+    def evaluate_model_performance(true_tickers: List[str], extracted_tickers: List[str]):
         """
         Purpose:
             Assess model performance by analyzing the predicted tickers from ticker/company extraction models with actual answers from test data to calculate precision and sensitivity. 
@@ -88,6 +89,22 @@ class ModelUtils:
         with open(filepath, 'r', encoding='utf-8') as file:
             content = file.read()
             return content
+    
+    @staticmethod
+    def convert_comma_separated_string_to_list(variable):
+        """
+        Purpose:
+            Convert a comma-separated string into a list of strings.
+
+        Arguments:
+            variable: Comma-separated string
+        
+        Output:
+            List of strings
+        """
+        # Remove leading and trailing whitespace, then split by comma and strip each element
+        list_of_strings = [item.strip() for item in variable.split(',')]
+        return list_of_strings
 
     @staticmethod
     def preprocess_text(text, lower_case = True):
@@ -102,6 +119,7 @@ class ModelUtils:
         Output:
             preprocessed_text: A list of words from the text after preprocessing
         """
+        # Using compile because repeated pattern on large number of texts it is more efficient than .finditer or .findall
         url_pattern = re.compile(r"http[s]?\://\S+")
 
         # Remove punctuation from entire text
@@ -115,7 +133,6 @@ class ModelUtils:
         # replace new line in reddit text with space, so that text1.split() will handle words better
         text = text.replace("/n", ' ')
 
-        # Find ticker pattern, using compile because repeated pattern on large number of texts it is more efficient than .finditer or .findall
         words = word_tokenize(text)
 
         # Compile non-alphanumeric pattern

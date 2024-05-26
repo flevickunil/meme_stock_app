@@ -4,7 +4,6 @@ import numpy as np
 import time
 from typing import List, Tuple, Dict, Any
 from fuzzywuzzy import fuzz, process
-
 from utils import ModelUtils
 
 
@@ -13,16 +12,17 @@ class RegexExtraction:
     A class to encapsulate the extraction of company tickers from a list of tokens.
     """
     @staticmethod
-    def extract_tickers(tokens: List[str], blacklist = None):
+    def extract_tickers(tokens: List[str], ticker_dict: List[str], blacklist=None):
         """
         Purpose:
             Extract company tickers from a list of tokens using the provided regex pattern.
 
         Arguments:
             tokens: List of tokens (words) to scan for tickers
+            blacklist: list of words (String) to actively avoid
 
         Output:
-            A list of tickers represented as strings
+            A string of positively identified tickers
             avg_time: the average time taken to identify a ticker
         """
         ticker_pattern = re.compile(r"\b[A-Z]{1,5}\b")
@@ -32,10 +32,21 @@ class RegexExtraction:
 
         # Use the regex pattern to filter out tickers from the tokens
         start_time = time.time()
-        tickers = [token.lower() for token in tokens if token.upper() not in blacklist and ticker_pattern.match(token)]
+        tickers = [token.upper() for token in tokens if token.upper() not in blacklist and ticker_pattern.match(token)]
+
+        # Match extracted tickers with those from the dictionary
+        positive_matches = [ticker for ticker in tickers if ticker in ticker_dict]
+        
+        #end time and record avg_time
         end_time = time.time()
-        avg_time = (end_time - start_time)/len(tokens)
-        return tickers, avg_time
+        avg_time = (end_time - start_time) / len(tokens)
+
+        return positive_matches, avg_time
+    
+    @staticmethod
+    def create_ticker_list(data: Dict):
+        ticker_list = [v['ticker'] for k, v in data.items()]
+        return ticker_list
 
 class GloveModel:
     """
@@ -221,7 +232,7 @@ class GloveModel:
         
         return results
 
-    def run_glove_model(self, tokens: List[str], combined_vec_dict, threshold, vector_dim=50)
+    def run_glove_model(self, tokens: List[str], combined_vec_dict, threshold, vector_dim=50):
         """
         Purpose: to run the GloVe model on a list of tokens 
 
@@ -234,8 +245,8 @@ class GloveModel:
         Output:
             list of predicted tickers
         """
-        if thresholds is None:
-            print('input threshold']
+        if threshold is None:
+            print('input threshold')
         elif threshold > 1 or threshold < -1:
             print('Threshold values must be between -1 and 1.')
             return []
@@ -317,7 +328,7 @@ class FuzzModel:
         else:
             return None 
 
-    def fuzz_optimum_threshold(self, tokens: List[str], value_to_key: dict, values: List[str], true_tickers: List[str], thresholds=None): 
+    def fuzz_optimum_threshold(self, tokens: List[str], value_to_key: Dict, values: List[str], true_tickers: List[str], thresholds=None): 
         """
         Purpose:
             Finds the optimum threshold for fuzzy matching based on precision and recall.
@@ -336,6 +347,7 @@ class FuzzModel:
             thresholds = np.arange(80, 100, 5)
 
         result = []
+
         for threshold in thresholds:
             predicted_tickers = []
             times = []
@@ -352,10 +364,10 @@ class FuzzModel:
             precision, sensitivity = ModelUtils.evaluate_model_performance(true_tickers, predicted_tickers)
             avg_time = np.mean(times)
             result.append(f'Threshold: {threshold}, precision: {precision:.3f}, sensitivity: {sensitivity:.3f}, time taken to match: {avg_time:.4f}s')
-
         return result
 
-        def run_fuzz_model(self, tokens: List[str], value_to_key: dict, values: List[str], threshold: int):
+
+    def run_fuzz_model(self, tokens: List[str], value_to_key: dict, values: List[str], threshold: int):
         """
         Purpose:
             Run fuzz model on list of tokens
