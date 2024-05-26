@@ -83,22 +83,35 @@ class RedditAPIHelper:
     def get_api_limit(self, timezone: str):
         """
         Purpose:
-            identify how many API calls left in the limit imposed by reddit (600 per 10 minutes) 
+            Identify how many API calls are left within the limit imposed by Reddit (600 per 10 minutes).
 
         Arguments:
-            timezone: timezone as a string e.g. ('Europe/Zurich')
+            timezone: Timezone as a string e.g. ('Europe/Zurich').
 
         Output:
-            a print statement informing when the reset time was for API calls and how many remaining requests there are
+            A print statement informing when the reset time is for API calls and how many remaining requests there are.
         """
         try:
-            #connect to reddit authority limits
+            # Connect to Reddit authority limits
             limit = self.reddit.auth.limits
-            remaining_requests = limit['remaining']
-            #get datetime of when reset will occur & translate into local time
-            reset = datetime.utcfromtimestamp(limit['reset_timestamp'])
+            
+            if limit is None:
+                print("Failed to retrieve API limits.")
+                return
+
+            remaining_requests = limit.get('remaining')
+            reset_timestamp = limit.get('reset_timestamp')
+            
+            if remaining_requests is None or reset_timestamp is None:
+                print("Failed to retrieve remaining requests or reset timestamp.")
+                return
+
+            # Get datetime of when reset will occur & translate into local time
+            reset = datetime.utcfromtimestamp(reset_timestamp)
             reset_time = pytz.utc.localize(reset).astimezone(pytz.timezone(timezone))
-            print(f'Reset time was {reset_time}, you have {remaining_requests} requests remaining')
+            print(f'Reset time is {reset_time}, you have {remaining_requests} requests remaining')
             
         except pytz.UnknownTimeZoneError:
             print(f'Unknown timezone: {timezone}')
+        except Exception as e:
+            print(f'An error occurred: {e}')
