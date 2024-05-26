@@ -19,7 +19,29 @@ class MemeStockVizualiser:
         color_discrete_sequence = px.colors.qualitative.Plotly
         fig = px.scatter(self.dataframe, x='date', y='count', color='ticker',
                          title='Ticker Mention Frequency Over Time', color_discrete_sequence=color_discrete_sequence)
-        fig.show()
+        st.plotly_chart(fig)
+
+    def plot_ticker_cumsum(self):
+        """
+        Plots a line plot of cumulative ticker mention frequency over time.
+
+        Parameters:
+        tickers (DataFrame): A DataFrame containing 'date', 'count', and 'ticker' columns.
+        """
+        # Convert the date column to datetime format
+        self.dataframe['date'] = pd.to_datetime(self.dataframe['date'], format="%Y-%m-%d")
+
+        # Sort the dataframe by date and ticker
+        self.dataframe = self.dataframe.sort_values(by=['ticker', 'date'])
+
+        # Calculate cumulative sum for each ticker
+        self.dataframe['cumulative_count'] = self.dataframe.groupby('ticker')['count'].cumsum()
+
+        # Plot the cumulative data
+        color_discrete_sequence = px.colors.qualitative.Plotly
+        fig = px.line(self.dataframe, x='date', y='cumulative_count', color='ticker',
+                      title='Cumulative Ticker Mention Frequency Over Time', color_discrete_sequence=color_discrete_sequence)
+        st.plotly_chart(fig)
 
     def get_stock_info(self):
         st.title('Stock Ticker Frequency and Volume')
@@ -64,10 +86,10 @@ class MemeStockVizualiser:
 # This ensures the script runs as a Streamlit app
 if __name__ == '__main__':
     # get ticker reddit dataframe
-    #TODO
-    ticker_df = pd.read_csv('path/to/ticker_df.csv')
+    ticker_df = pd.read_csv('ticker_frequencies.csv')
 
-    app = MemeStockVizualiser(dataframe)
-    st.title('My Project')
-    app.plot_ticker_mentions
+    app = MemeStockVizualiser(ticker_df)
+    st.title('Meme Stock App - View WSB Ticker Mentions & Corresponding Stock Volume Data')
+    app.plot_ticker_mentions()
+    app.plot_ticker_cumsum()
     app.get_stock_info()

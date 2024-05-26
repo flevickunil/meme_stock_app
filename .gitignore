@@ -4,3 +4,8 @@ credentials.env
 #Project Files
 streamlit_test.py
 
+#data files
+ticker_frequencies.csv
+
+#Ignore Workspace File
+workspace.ipynb

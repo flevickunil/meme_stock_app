@@ -12,36 +12,46 @@ class RegexExtraction:
     A class to encapsulate the extraction of company tickers from a list of tokens.
     """
     @staticmethod
-    def extract_tickers(tokens: List[str], ticker_dict: List[str], blacklist=None):
+    def extract_tickers(tokens: List[str], ticker_dict: List[str], blacklist=None, time_method=True):
         """
         Purpose:
             Extract company tickers from a list of tokens using the provided regex pattern.
 
         Arguments:
             tokens: List of tokens (words) to scan for tickers
-            blacklist: list of words (String) to actively avoid
+            ticker_dict: List of valid tickers to match against
+            blacklist: List of words (String) to actively avoid
+            time_method: Boolean flag to enable/disable timing
 
         Output:
-            A string of positively identified tickers
-            avg_time: the average time taken to identify a ticker
+            A list of positively identified tickers
+            avg_time: The average time taken to identify a ticker (if time_method is True)
         """
         ticker_pattern = re.compile(r"\b[A-Z]{1,5}\b")
 
         if blacklist is None:
             blacklist = []
 
+        # Start timing if enabled
+        if time_method:
+            start_time = time.time()
+
         # Use the regex pattern to filter out tickers from the tokens
-        start_time = time.time()
         tickers = [token.upper() for token in tokens if token.upper() not in blacklist and ticker_pattern.match(token)]
 
         # Match extracted tickers with those from the dictionary
         positive_matches = [ticker for ticker in tickers if ticker in ticker_dict]
         
-        #end time and record avg_time
-        end_time = time.time()
-        avg_time = (end_time - start_time) / len(tokens)
-
-        return positive_matches, avg_time
+        if time_method:
+            # End timing and record avg_time
+            end_time = time.time()
+            if len(tokens) > 0:
+                avg_time = (end_time - start_time) / len(tokens)
+            else:
+                avg_time = 0  # Avoid division by zero
+            return positive_matches, avg_time
+        
+        return positive_matches
     
     @staticmethod
     def create_ticker_list(data: Dict):

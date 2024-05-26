@@ -56,9 +56,9 @@ class ModelUtils:
         extracted = Counter(extracted_tickers)
 
         # Calculate true positives, false positives, and false negatives
-        true_positives = sum((true & extracted).values())
-        false_positives = sum((extracted - true).values())
-        false_negatives = sum((true - extracted).values())
+        true_positives = sum((true & extracted).values()) #Intersection of true and extracted counters
+        false_positives = sum((extracted - true).values()) #Elements in extracted but not in true.
+        false_negatives = sum((true - extracted).values()) #Elements in true but not in extracted.
 
         # Calculate precision
         if true_positives + false_positives > 0:
